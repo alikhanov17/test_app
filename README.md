@@ -1,60 +1,60 @@
 # TestApp
 
-A Flutter demo app showcasing onboarding, a subscription paywall, and a main content screen — built with GetX and SharedPreferences.
+Flutter-приложение с онбордингом, экраном подписки и главным экраном с контентом — построено на GetX и SharedPreferences.
 
 ---
 
-## Tech Stack
+## Стек технологий
 
-| Tool | Version | Purpose |
+| Инструмент | Версия | Назначение |
 |---|---|---|
-| Flutter | 3.41.4 | UI framework |
-| Dart | 3.11.1+ | Language |
-| [get](https://pub.dev/packages/get) | ^4.6.6 | State management, routing, DI |
-| [shared_preferences](https://pub.dev/packages/shared_preferences) | ^2.3.2 | Local subscription persistence |
+| Flutter | 3.41.4 | UI-фреймворк |
+| Dart | 3.11.1+ | Язык программирования |
+| [get](https://pub.dev/packages/get) | ^4.6.6 | Стейт-менеджмент, роутинг, DI |
+| [shared_preferences](https://pub.dev/packages/shared_preferences) | ^2.3.2 | Локальное хранение состояния подписки |
 
 ---
 
-## Architecture
+## Архитектура
 
-The project follows **GetX MVC** with a feature-based (modular) folder structure.
+Проект построен на **GetX MVC** с модульной структурой папок по фичам.
 
-### Why GetX MVC for this app
+### Почему GetX MVC
 
-- Clean Architecture would be overkill for 3 screens — no repositories or use-cases needed
-- GetX handles state, routing, and dependency injection in one package with minimal boilerplate
-- Each feature is fully self-contained: its own controller, view, and binding
-- A shared `common/widgets` layer prevents duplication across modules
+- Clean Architecture избыточна для 3 экранов — репозитории и use-case не нужны
+- GetX берёт на себя стейт, роутинг и DI в одном пакете с минимальным кодом
+- Каждая фича полностью изолирована: свой контроллер, вью и байндинг
+- Общий слой `common/widgets` исключает дублирование между модулями
 
-### Layer responsibilities
+### Ответственность слоёв
 
 ```
-Controller   Business logic + reactive state (GetxController)
-View         Stateless UI, reads from controller via Obx / GetView
-Binding      Lazy dependency injection wired to a route
-Service      Data layer — SharedPreferences wrapper (GetxService)
+Controller   Бизнес-логика + реактивное состояние (GetxController)
+View         Stateless UI, читает контроллер через Obx / GetView
+Binding      Ленивое внедрение зависимостей, привязанное к роуту
+Service      Слой данных — обёртка над SharedPreferences (GetxService)
 ```
 
 ---
 
-## Folder Structure
+## Структура проекта
 
 ```
 lib/
-├── main.dart                           # Entry point — initializes StorageService, resolves initial route
+├── main.dart                           # Точка входа — инициализация StorageService, выбор начального роута
 │
 └── app/
     ├── data/
     │   └── services/
-    │       └── storage_service.dart    # SharedPreferences wrapper (subscription state)
+    │       └── storage_service.dart    # Обёртка SharedPreferences (состояние подписки)
     │
     ├── common/
     │   └── widgets/
-    │       ├── app_button.dart         # Primary CTA button (loading state support)
-    │       ├── page_indicator.dart     # Animated dot indicator for PageView
-    │       ├── plan_card.dart          # Subscription plan selection card
-    │       ├── article_card.dart       # Home feed article card
-    │       └── subscription_badge.dart # Pro badge shown in the app bar
+    │       ├── app_button.dart         # Основная кнопка CTA (поддержка состояния загрузки)
+    │       ├── page_indicator.dart     # Анимированные точки для PageView
+    │       ├── plan_card.dart          # Карточка выбора тарифа
+    │       ├── article_card.dart       # Карточка статьи на главном экране
+    │       └── subscription_badge.dart # Бейдж Pro в шапке приложения
     │
     ├── modules/
     │   ├── onboarding/
@@ -73,47 +73,47 @@ lib/
     │       └── home_view.dart
     │
     └── routes/
-        ├── app_routes.dart             # Route name constants
-        └── app_pages.dart              # GetPage definitions with bindings
+        ├── app_routes.dart             # Константы имён роутов
+        └── app_pages.dart              # Определения GetPage с байндингами
 ```
 
 ---
 
-## App Flow
+## Навигационный поток
 
 ```
-App launch
+Запуск приложения
     │
-    ├─ is_subscribed == true ──────────────────────► Home
+    ├─ is_subscribed == true ──────────────────────► Главный экран
     │
     └─ is_subscribed == false
              │
              ▼
-        Onboarding (2 screens)
-             │  tap "Начать" on last page
+        Онбординг (2 экрана)
+             │  нажатие "Начать" на последнем экране
              ▼
-        Paywall
-             │  tap "Продолжить" → saves plan to SharedPreferences
+        Пейвол
+             │  нажатие "Продолжить" → сохранение тарифа в SharedPreferences
              ▼
-        Home  (offAll — clears navigation stack)
+        Главный экран  (offAll — стек навигации очищается)
 ```
 
-On every subsequent launch the app resolves the initial route **before** `runApp`, so there is no flash of the wrong screen.
+Начальный роут определяется **до** вызова `runApp`, поэтому мигания неправильного экрана при запуске не происходит.
 
 ---
 
-## State Management
+## Стейт-менеджмент
 
-GetX reactive primitives are used for all mutable UI state:
+Для всего изменяемого UI-состояния используются реактивные примитивы GetX:
 
 ```dart
-// Observable value — any Obx() listening to it rebuilds automatically
+// Реактивное значение — любой Obx(), подписанный на него, перестраивается автоматически
 final currentPage = 0.obs;
 final selectedPlan = 'yearly'.obs;
 final isLoading = false.obs;
 ```
 
-Controllers are injected lazily via `Bindings` and tied to their route's lifecycle — they are created when the route is pushed and disposed when it is popped.
+Контроллеры внедряются лениво через `Bindings` и привязаны к жизненному циклу роута — создаются при переходе на экран и удаляются при выходе с него.
 
 ```dart
 class PaywallBinding extends Bindings {
@@ -126,57 +126,57 @@ class PaywallBinding extends Bindings {
 
 ---
 
-## Data Persistence
+## Хранение данных
 
-`StorageService` (a `GetxService`) wraps SharedPreferences and is initialized once at startup with `Get.putAsync`. It stores two keys:
+`StorageService` (наследник `GetxService`) оборачивает SharedPreferences и инициализируется один раз при старте через `Get.putAsync`. Хранит два ключа:
 
-| Key | Type | Description |
+| Ключ | Тип | Описание |
 |---|---|---|
-| `is_subscribed` | bool | Whether the user has an active subscription |
-| `subscription_type` | String | `"yearly"` or `"monthly"` |
+| `is_subscribed` | bool | Наличие активной подписки |
+| `subscription_type` | String | `"yearly"` или `"monthly"` |
 
 ```dart
-// Save after simulated purchase
+// Сохранение после имитации покупки
 await Get.find<StorageService>().saveSubscription('yearly');
 ```
 
 ---
 
-## Common Widgets
+## Общие виджеты
 
-Reusable widgets live in `app/common/widgets/` and are shared across modules:
+Переиспользуемые виджеты находятся в `app/common/widgets/` и используются в нескольких модулях:
 
-| Widget | Props | Notes |
+| Виджет | Параметры | Примечание |
 |---|---|---|
-| `AppButton` | `label`, `onPressed`, `isLoading` | Shows a spinner when `isLoading: true` |
-| `PageIndicator` | `count`, `current` | Animated pill-shaped dots |
-| `PlanCard` | `title`, `price`, `period`, `subtitle?`, `badge?`, `isSelected`, `onTap` | Animated selection border |
-| `ArticleCard` | `article` | Color-coded category chip |
-| `SubscriptionBadge` | `label` | Purple pill shown in the app bar |
+| `AppButton` | `label`, `onPressed`, `isLoading` | При `isLoading: true` показывает спиннер |
+| `PageIndicator` | `count`, `current` | Анимированные точки-пилюли |
+| `PlanCard` | `title`, `price`, `period`, `subtitle?`, `badge?`, `isSelected`, `onTap` | Анимированная рамка при выборе |
+| `ArticleCard` | `article` | Цветной чип категории |
+| `SubscriptionBadge` | `label` | Фиолетовая пилюля в шапке |
 
 ---
 
-## Screens
+## Экраны
 
-### Onboarding
-Two-page `PageView` with an icon, title, and description. The button label switches from **"Продолжить"** to **"Начать"** on the last page.
+### Онбординг
+`PageView` из двух страниц с иконкой, заголовком и описанием. Текст кнопки меняется с **«Продолжить»** на **«Начать»** на последней странице.
 
-### Paywall
-Dark-themed screen (`#0F0F1A`) with two selectable plan cards. The **Yearly** plan is pre-selected and carries a **"ВЫГОДНЕЕ"** badge. Tapping **"Продолжить"** simulates an 800 ms purchase delay, persists the subscription, then navigates to Home via `Get.offAllNamed` (clearing the back stack).
+### Пейвол
+Тёмный экран (`#0F0F1A`) с двумя карточками выбора тарифа. Тариф **«Годовой»** выбран по умолчанию и имеет бейдж **«ВЫГОДНЕЕ»**. Нажатие **«Продолжить»** имитирует задержку покупки 800 мс, сохраняет подписку и переходит на главный экран через `Get.offAllNamed` (стек очищается).
 
-### Home
-A `CustomScrollView` with a pinned `SliverAppBar` that displays the active plan badge. Below it is a list of six article cards, each with a color-coded category, title, description, and read-time indicator.
+### Главный экран
+`CustomScrollView` с закреплённым `SliverAppBar`, отображающим бейдж активного тарифа. Ниже — список из шести карточек статей с цветной категорией, заголовком, описанием и временем чтения.
 
 ---
 
-## Getting Started
+## Запуск проекта
 
 ```bash
-# Install dependencies
+# Установка зависимостей
 flutter pub get
 
-# Run on a connected device or simulator
+# Запуск на подключённом устройстве или симуляторе
 flutter run
 ```
 
-To reset subscription state (go back to onboarding), clear app data on the device or call `StorageService.clearSubscription()` from the app.
+Чтобы сбросить состояние подписки и вернуться к онбордингу — очистите данные приложения на устройстве или вызовите `StorageService.clearSubscription()`.
